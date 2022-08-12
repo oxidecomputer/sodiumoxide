@@ -230,6 +230,8 @@ fn make_libsodium(target: &str, source_dir: &Path, install_dir: &Path) -> PathBu
     } else if target.contains("i686") {
         compiler += " -m32 -maes";
         cflags += " -march=i686";
+    } else if target.contains("-illumos") {
+        host_arg = host_arg.replace("illumos", "solaris");
     }
 
     let help = if cross_compiling {
@@ -274,7 +276,11 @@ fn make_libsodium(target: &str, source_dir: &Path, install_dir: &Path) -> PathBu
     // Run `make check`, or `make all` if we're cross-compiling
     let j_arg = format!("-j{}", env::var("NUM_JOBS").unwrap());
     let make_arg = if cross_compiling { "all" } else { "check" };
-    let mut make_cmd = Command::new("make");
+    let mut make_cmd = Command::new(if target.contains("-illumos") {
+        "gmake"
+    } else {
+        "make"
+    });
     let make_status = make_cmd
         .current_dir(&source_dir)
         .env("V", "1")
